@@ -1,0 +1,135 @@
+import kotlin.math.abs
+import kotlin.system.exitProcess
+import kotlin.random.Random
+
+fun rules() {
+    do {
+        println("\n--- THE RULES ---")
+        println("1. Goal: Reach 10 points before the bot.")
+        println("2. Setup: You start at 0, Bot starts at 3.")
+        println("3. Play: Both pick numbers (0-20). You choose to Add or Subtract yours.")
+        println("4. Guess: Is the final total ODD or EVEN?")
+        println("5. Multiplier: A streak of 2 lets you risk losing points for higher gains.")
+
+        println("\nDo you understand the rules?\nA) Yes\nB) No")
+        val choice = readln().uppercase()
+        if (choice != "A" && choice != "B") println("Invalid input.")
+    } while (choice != "A")
+}
+
+fun game(botpoint: Int, userpoints: Int): Pair<Int, Int> {
+    var currentbotpoints = botpoint
+    var currentuserpoints = userpoints
+    var streak = 0
+    var triggered = false
+    var pointgain = 1
+    var pointloss = 1
+
+    println("ITS GAME TIME!")
+
+    while (currentuserpoints < 10 && currentbotpoints < 10) {
+        var finalnumber = 0
+        val botnumber = Random.nextInt(0, 21)
+        val botchoice = Random.nextInt(2)
+
+        if (botchoice == 0) finalnumber += botnumber else finalnumber -= botnumber
+
+        println("\nBot: hmmmmmm...")
+        Thread.sleep(1000)
+        println("Bot: Alright I'm Done, your turn!")
+
+        println("\n--- Current Standings ---")
+        println("Bot: $currentbotpoints | You: $currentuserpoints | Streak: $streak")
+
+        // --- FIXED MULTIPLIER TRIGGER ---
+        if (streak == 2 && !triggered) {
+            println("\n STREAK TRIGGERED!")
+            println("Risk +3 gain / -2 loss for the rest of the game?")
+            println("A) Yes\nB) No")
+
+            var multiChoice: String
+            do {
+                print("Choose now: ")
+                multiChoice = readln().uppercase()
+                if (multiChoice == "A") {
+                    println("High stakes activated!")
+                    triggered = true
+                    pointgain = 3
+                    pointloss = 2
+                } else if (multiChoice == "B") {
+                    triggered = true // Marks it as 'handled' so it doesn't ask every turn
+                    streak = 0
+                } else {
+                    println("Please type A or B.")
+                }
+            } while (multiChoice != "A" && multiChoice != "B")
+        }
+
+        println("\nWhat would you like to do?")
+        println("A) Make a choice\nB) Exit to menu")
+        val menuChoice = readln().uppercase()
+        if (menuChoice == "B") break
+
+        println("Choose a Number (0 - 20):")
+        val userint = abs(readln().toIntOrNull() ?: 0)
+
+        println("Do you want to: A) Add or B) Subtract?")
+        if (readln().uppercase() == "A") finalnumber += userint else finalnumber -= userint
+
+        println("Is the total: A) Odd or B) Even?")
+        val userGuess = if (readln().uppercase() == "A") "Odd" else "Even"
+
+        // abs() ensures negative odd numbers correctly result in "Odd"
+        val result = if (abs(finalnumber) % 2 == 0) "Even" else "Odd"
+
+        println("\nResult: $finalnumber ($result). You guessed $userGuess.")
+
+        if (userGuess == result) {
+            println("CORRECT! +$pointgain points.")
+            currentuserpoints += pointgain
+            streak++
+        } else {
+            println("WRONG! Bot gets a point.")
+            currentbotpoints += 1
+            if (triggered) {
+                currentuserpoints -= pointloss
+                if (currentuserpoints < 0) currentuserpoints = 0
+            }
+            streak = 0
+        }
+    }
+
+    if (currentuserpoints >= 10) println("\n YOU WIN CONGRATS!")
+    else if (currentbotpoints >= 10) println("\n THE BOT WINS!")
+
+    return Pair(currentbotpoints, currentuserpoints)
+}
+
+fun shutdown(botpoint: Int, userpoints: Int) {
+    println("\nThe Final score was - Bot: $botpoint | You: $userpoints")
+    if (botpoint > userpoints) println("The Bot wins, Sorry you lose!") else println("You Win Congrats!")
+    exitProcess(0)
+}
+
+fun main() {
+    var botpoint = 3
+    var userpoints = 0
+    println("Welcome to the odds or evens game")
+
+    do {
+        println("\n--- MAIN MENU ---")
+        println("A) Read the rules\nB) Play the game\nC) End the game")
+        print("Choose now: ")
+        val userchoice = readln().uppercase()
+        when (userchoice) {
+            "A" -> rules()
+            "B" -> {
+                val results = game(botpoint, userpoints)
+                botpoint = results.first
+                userpoints = results.second
+            }
+            "C" -> shutdown(botpoint, userpoints)
+            else -> println("Unknown choice, try again.")
+        }
+    } while (true) // Loop runs until shutdown() calls exitProcess
+}

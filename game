@@ -1,3 +1,4 @@
+//This game was made by Shalim A. D.
 import kotlin.math.abs
 import kotlin.system.exitProcess
 import kotlin.random.Random
